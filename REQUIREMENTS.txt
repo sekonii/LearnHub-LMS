@@ -1,0 +1,14 @@
+# WAUU LMS - Python Dependencies
+# Install these packages for local deployment
+
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+psycopg2-binary==2.9.9
+gunicorn==21.2.0
+email-validator==2.1.0
+Werkzeug==3.0.1
+SQLAlchemy==2.0.23
+
+# Installation command:
+# pip install Flask Flask-SQLAlchemy Flask-Login psycopg2-binary gunicorn email-validator Werkzeug SQLAlchemy
