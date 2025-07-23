@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}{{ assignment.title }} - WAUU LMS{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('assignments') }}">Assignments</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('course_detail', course_id=assignment.course_id) }}">{{ assignment.course.code }}</a></li>
+                <li class="breadcrumb-item active">{{ assignment.title }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header wauu-bg text-white">
+                <h4 class="mb-0">{{ assignment.title }}</h4>
+                <small>{{ assignment.course.code }} - {{ assignment.course.title }}</small>
+            </div>
+            <div class="card-body">
+                <p class="lead">{{ assignment.description }}</p>
+                
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <strong>Maximum Points:</strong><br>
+                        <span class="badge wauu-bg fs-6">{{ assignment.max_points }} points</span>
+                    </div>
+                    {% if assignment.due_date %}
+                    <div class="col-md-4">
+                        <strong>Due Date:</strong><br>
+                        <span class="badge bg-warning text-dark fs-6">{{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-4">
+                        <strong>Created:</strong><br>
+                        <span class="text-muted">{{ assignment.created_at.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                </div>
+                
+                {% if current_user.is_student() %}
+                <!-- Student View: Submission and Grade -->
+                {% if submission %}
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-check-circle me-2"></i>Submission Complete</h5>
+                    <p class="mb-0">You submitted this assignment on {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    {% if submission.is_late() %}
+                    <small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>This submission was late.</small>
+                    {% endif %}
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-file-alt me-2"></i>Your Submission</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if submission.content %}
+                        <div class="mb-3">
+                            <strong>Text Submission:</strong>
+                            <div class="border p-3 mt-2 bg-light">{{ submission.content }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if submission.file_path %}
+                        <div class="mb-3">
+                            <strong>File Submission:</strong><br>
+                            <a href="{{ url_for('uploaded_file', filename=submission.file_path.split('/')[-1]) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download me-1"></i>Download File
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        {% if submission.url %}
+                        <div class="mb-3">
+                            <strong>URL Submission:</strong><br>
+                            <a href="{{ submission.url }}" target="_blank" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-external-link-alt me-1"></i>View Link
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if grade %}
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h6><i class="fas fa-star me-2"></i>Grade</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>{{ grade.points_earned }} / {{ assignment.max_points }}</h4>
+                                <p class="mb-0">{{ "%.1f"|format(grade.get_percentage()) }}%</p>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <small class="text-muted">Graded on {{ grade.graded_at.strftime('%Y-%m-%d') }}</small>
+                            </div>
+                        </div>
+                        {% if grade.feedback %}
+                        <div class="mt-3">
+                            <strong>Feedback:</strong>
+                            <div class="border p-3 mt-2 bg-light">{{ grade.feedback }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-clock me-2"></i>Your submission is awaiting grading.
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <!-- Student hasn't submitted yet -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-upload me-2"></i>Submit Assignment</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('submit_assignment', assignment_id=assignment.id) }}" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="content" class="form-label">Text Submission</label>
+                                <textarea class="form-control" id="content" name="content" rows="4" placeholder="Enter your text submission here..."></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="file" class="form-label">File Upload</label>
+                                <input type="file" class="form-control" id="file" name="file">
+                                <div class="form-text">Supported formats: PDF, DOC, DOCX, TXT, images, and archives. Max size: 16MB</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="url" class="form-label">URL Submission</label>
+                                <input type="url" class="form-control" id="url" name="url" placeholder="https://example.com">
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn wauu-btn">
+                                    <i class="fas fa-upload me-1"></i>Submit Assignment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% elif current_user.is_lecturer() or current_user.is_admin() %}
+                <!-- Lecturer/Admin View: All Submissions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-users me-2"></i>Student Submissions ({{ submissions|length }})</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if submissions %}
+                        {% for submission in submissions %}
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ submission.student.get_full_name() }}</strong>
+                                        <small class="text-muted">({{ submission.student.username }})</small>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">{{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        {% if submission.is_late() %}
+                                        <span class="badge bg-warning ms-2">Late</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                {% if submission.content %}
+                                <div class="mb-3">
+                                    <strong>Text Submission:</strong>
+                                    <div class="border p-3 mt-2 bg-light">{{ submission.content[:200] }}{% if submission.content|length > 200 %}...{% endif %}</div>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="row">
+                                    {% if submission.file_path %}
+                                    <div class="col-md-4">
+                                        <strong>File:</strong><br>
+                                        <a href="{{ url_for('uploaded_file', filename=submission.file_path.split('/')[-1]) }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-download me-1"></i>Download
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if submission.url %}
+                                    <div class="col-md-4">
+                                        <strong>URL:</strong><br>
+                                        <a href="{{ submission.url }}" target="_blank" class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-external-link-alt me-1"></i>View
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Grading Form -->
+                                {% set grade = assignment.grades.filter_by(student_id=submission.student_id).first() %}
+                                <div class="mt-3 border-top pt-3">
+                                    <form method="POST" action="{{ url_for('grade_submission', submission_id=submission.id) }}">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label for="points_{{ submission.id }}" class="form-label">Points Earned</label>
+                                                <input type="number" class="form-control" id="points_{{ submission.id }}" name="points_earned" 
+                                                       min="0" max="{{ assignment.max_points }}" step="0.1" 
+                                                       value="{{ grade.points_earned if grade else '' }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="feedback_{{ submission.id }}" class="form-label">Feedback</label>
+                                                <textarea class="form-control" id="feedback_{{ submission.id }}" name="feedback" rows="2">{{ grade.feedback if grade else '' }}</textarea>
+                                            </div>
+                                            <div class="col-md-3 d-flex align-items-end">
+                                                <button type="submit" class="btn wauu-btn w-100">
+                                                    <i class="fas fa-save me-1"></i>{% if grade %}Update{% else %}Grade{% endif %}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <p class="text-muted">No submissions yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-info-circle me-2"></i>Assignment Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Course:</strong><br>
+                    <a href="{{ url_for('course_detail', course_id=assignment.course_id) }}" class="text-decoration-none">
+                        {{ assignment.course.code }} - {{ assignment.course.title }}
+                    </a>
+                </div>
+                <div class="mb-3">
+                    <strong>Lecturer:</strong><br>
+                    {{ assignment.course.lecturer.get_full_name() }}
+                </div>
+                <div class="mb-3">
+                    <strong>Maximum Points:</strong><br>
+                    <span class="badge wauu-bg">{{ assignment.max_points }}</span>
+                </div>
+                {% if assignment.due_date %}
+                <div class="mb-3">
+                    <strong>Due Date:</strong><br>
+                    {{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <strong>Created:</strong><br>
+                    {{ assignment.created_at.strftime('%Y-%m-%d') }}
+                </div>
+                {% if current_user.is_lecturer() or current_user.is_admin() %}
+                <div class="mb-3">
+                    <strong>Submissions:</strong><br>
+                    {{ submissions|length }} of {{ assignment.course.enrollments.count() }} students
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

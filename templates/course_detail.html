@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.code }} - {{ course.title }} - WAUU LMS{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('courses') }}">Courses</a></li>
+                <li class="breadcrumb-item active">{{ course.code }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header wauu-bg text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">{{ course.code }} - {{ course.title }}</h4>
+                        <small>Lecturer: {{ course.lecturer.get_full_name() }}</small>
+                    </div>
+                    <span class="badge bg-light text-dark">{{ course.enrollments.count() }} students</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="lead">{{ course.description }}</p>
+                
+                {% if current_user.is_lecturer() and course.lecturer_id == current_user.id %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    You are the lecturer for this course. You can manage assignments and view student submissions.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Assignments Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-tasks me-2"></i>Assignments</h5>
+                    {% if current_user.is_lecturer() and course.lecturer_id == current_user.id %}
+                    <a href="{{ url_for('create_assignment', course_id=course.id) }}" class="btn wauu-btn btn-sm">
+                        <i class="fas fa-plus me-1"></i>Create Assignment
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if assignments %}
+                <div class="list-group list-group-flush">
+                    {% for assignment in assignments %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ assignment.title }}</h6>
+                                <p class="mb-1 text-muted">{{ assignment.description[:100] }}...</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-star me-1"></i>{{ assignment.max_points }} points
+                                    {% if assignment.due_date %}
+                                    | <i class="fas fa-calendar me-1"></i>Due: {{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('assignment_detail', assignment_id=assignment.id) }}" class="btn wauu-btn btn-sm">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No assignments available for this course.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Course Information -->
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-info-circle me-2"></i>Course Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>Course Code:</strong><br>
+                    <span class="badge wauu-bg">{{ course.code }}</span>
+                </div>
+                <div class="mb-2">
+                    <strong>Lecturer:</strong><br>
+                    {{ course.lecturer.get_full_name() }}
+                </div>
+                <div class="mb-2">
+                    <strong>Students Enrolled:</strong><br>
+                    {{ course.enrollments.count() }}
+                </div>
+                <div class="mb-2">
+                    <strong>Assignments:</strong><br>
+                    {{ assignments|length }}
+                </div>
+                <div>
+                    <strong>Created:</strong><br>
+                    {{ course.created_at.strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Discussions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6><i class="fas fa-comments me-2"></i>Recent Discussions</h6>
+            </div>
+            <div class="card-body">
+                {% if discussions %}
+                {% for discussion in discussions[:3] %}
+                <div class="border-bottom pb-2 mb-2">
+                    <h6 class="mb-1">
+                        <a href="{{ url_for('discussion_detail', discussion_id=discussion.id) }}" class="text-decoration-none">
+                            {{ discussion.title }}
+                        </a>
+                    </h6>
+                    <small class="text-muted">
+                        <i class="fas fa-comments me-1"></i>{{ discussion.posts.count() }} posts |
+                        <i class="fas fa-clock me-1"></i>{{ discussion.created_at.strftime('%Y-%m-%d') }}
+                    </small>
+                </div>
+                {% endfor %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('discussions') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-eye me-1"></i>View All Discussions
+                    </a>
+                </div>
+                {% else %}
+                <p class="text-muted">No discussions available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

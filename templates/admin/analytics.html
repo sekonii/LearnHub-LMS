@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - WAUU LMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-bar me-2"></i>Analytics Dashboard</h2>
+    <div>
+        <button type="button" class="btn btn-outline-primary" onclick="generateReport()">
+            <i class="fas fa-file-pdf me-1"></i>Generate Report
+        </button>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white wauu-bg">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ metrics.total_users }}</h4>
+                        <p class="mb-0">Total Users</p>
+                        <small>+{{ metrics.new_users_this_month }} this month</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ metrics.active_courses }}</h4>
+                        <p class="mb-0">Active Courses</p>
+                        <small>{{ metrics.avg_enrollment }} avg enrollment</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-book fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ metrics.total_assignments }}</h4>
+                        <p class="mb-0">Assignments</p>
+                        <small>{{ metrics.submission_rate }}% submission rate</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tasks fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ metrics.avg_grade }}%</h4>
+                        <p class="mb-0">Average Grade</p>
+                        <small>{{ metrics.grade_improvement }} improvement</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-star fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line me-2"></i>User Registration Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="registrationChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie me-2"></i>User Role Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="roleChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-area me-2"></i>Course Activity Overview</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-trophy me-2"></i>Top Performing Courses</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for course in top_courses %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ course.code }}</strong>
+                            <br><small class="text-muted">{{ course.title }}</small>
+                        </div>
+                        <span class="badge wauu-bg rounded-pill">{{ course.avg_grade }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-clock me-2"></i>Recent User Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for activity in recent_activities %}
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                {{ activity.user.first_name[0] }}{{ activity.user.last_name[0] }}
+                            </div>
+                            <div>
+                                <strong>{{ activity.user.get_full_name() }}</strong>
+                                <br><small class="text-muted">{{ activity.action }} - {{ activity.created_at.strftime('%m/%d/%Y %H:%M') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>System Alerts</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Notice:</strong> System maintenance scheduled for Sunday, 2 AM - 4 AM.
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-users me-2"></i>
+                    <strong>Stats:</strong> {{ metrics.active_users_today }} users active today.
+                </div>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Performance:</strong> All systems operating normally.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Analytics Charts
+document.addEventListener('DOMContentLoaded', function() {
+    // Registration Trends Chart
+    const regCtx = document.getElementById('registrationChart').getContext('2d');
+    new Chart(regCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'New Users',
+                data: [12, 19, 8, 15, 20, 25],
+                borderColor: '#8b4049',
+                backgroundColor: 'rgba(139, 64, 73, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+    
+    // Role Distribution Chart
+    const roleCtx = document.getElementById('roleChart').getContext('2d');
+    new Chart(roleCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Students', 'Lecturers', 'Admins'],
+            datasets: [{
+                data: [{{ metrics.student_count }}, {{ metrics.lecturer_count }}, {{ metrics.admin_count }}],
+                backgroundColor: ['#28a745', '#007bff', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+    
+    // Activity Chart
+    const actCtx = document.getElementById('activityChart').getContext('2d');
+    new Chart(actCtx, {
+        type: 'bar',
+        data: {
+            labels: ['CS101', 'MATH201', 'ENG101', 'BUS301', 'HIST205', 'ECON101'],
+            datasets: [{
+                label: 'Submissions',
+                data: [45, 38, 52, 31, 29, 42],
+                backgroundColor: '#8b4049'
+            }, {
+                label: 'Discussions',
+                data: [23, 18, 28, 15, 12, 20],
+                backgroundColor: '#007bff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+});
+
+function generateReport() {
+    alert('Report generation feature will be implemented with PDF export functionality.');
+}
+</script>
+{% endblock %}

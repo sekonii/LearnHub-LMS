@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Create Assignment - {{ course.code }} - WAUU LMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header wauu-bg text-white">
+                <h4><i class="fas fa-tasks me-2"></i>Create Assignment for {{ course.code }}</h4>
+                <p class="mb-0">{{ course.title }}</p>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">
+                            <i class="fas fa-heading me-1"></i>Assignment Title
+                        </label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-file-alt me-1"></i>Description
+                        </label>
+                        <textarea class="form-control" id="description" name="description" rows="5" 
+                                  placeholder="Provide detailed instructions for the assignment..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="max_points" class="form-label">
+                                <i class="fas fa-star me-1"></i>Maximum Points
+                            </label>
+                            <input type="number" class="form-control" id="max_points" name="max_points" 
+                                   value="100" min="1" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="due_date" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Due Date (Optional)
+                            </label>
+                            <input type="datetime-local" class="form-control" id="due_date" name="due_date">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Course
+                        </a>
+                        <button type="submit" class="btn wauu-btn">
+                            <i class="fas fa-plus me-1"></i>Create Assignment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

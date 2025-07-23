@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Grades - WAUU LMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-line me-2"></i>My Grades</h2>
+</div>
+
+{% if grades %}
+<!-- Overall Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white wauu-bg">
+            <div class="card-body text-center">
+                <h4>{{ grades|length }}</h4>
+                <p class="mb-0">Total Grades</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                {% set total_percentage = 0 %}
+                {% for grade in grades %}
+                    {% set total_percentage = total_percentage + grade.get_percentage() %}
+                {% endfor %}
+                <h4>{{ "%.1f"|format(total_percentage / grades|length) }}%</h4>
+                <p class="mb-0">Average Grade</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                {% set total_points_earned = 0 %}
+                {% set total_points_possible = 0 %}
+                {% for grade in grades %}
+                    {% set total_points_earned = total_points_earned + grade.points_earned %}
+                    {% set total_points_possible = total_points_possible + grade.assignment.max_points %}
+                {% endfor %}
+                <h4>{{ total_points_earned|int }} / {{ total_points_possible|int }}</h4>
+                <p class="mb-0">Total Points</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                {% set high_grades = 0 %}
+                {% for grade in grades %}
+                    {% if grade.get_percentage() >= 80 %}
+                        {% set high_grades = high_grades + 1 %}
+                    {% endif %}
+                {% endfor %}
+                <h4>{{ high_grades }}</h4>
+                <p class="mb-0">High Grades (80%+)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grades Table -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-list me-2"></i>Grade Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="wauu-bg text-white">
+                    <tr>
+                        <th>Course</th>
+                        <th>Assignment</th>
+                        <th>Points Earned</th>
+                        <th>Max Points</th>
+                        <th>Percentage</th>
+                        <th>Grade</th>
+                        <th>Graded Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td>
+                            <strong>{{ grade.assignment.course.code }}</strong><br>
+                            <small class="text-muted">{{ grade.assignment.course.title }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ grade.assignment.title }}</strong>
+                        </td>
+                        <td>{{ grade.points_earned }}</td>
+                        <td>{{ grade.assignment.max_points }}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                {% set percentage = grade.get_percentage() %}
+                                <div class="progress-bar 
+                                    {% if percentage >= 90 %}bg-success
+                                    {% elif percentage >= 80 %}bg-info
+                                    {% elif percentage >= 70 %}bg-warning
+                                    {% else %}bg-danger
+                                    {% endif %}" 
+                                    role="progressbar" style="width: {{ percentage }}%">
+                                    {{ "%.1f"|format(percentage) }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% set percentage = grade.get_percentage() %}
+                            {% if percentage >= 90 %}
+                            <span class="badge bg-success">A</span>
+                            {% elif percentage >= 80 %}
+                            <span class="badge bg-info">B</span>
+                            {% elif percentage >= 70 %}
+                            <span class="badge bg-warning">C</span>
+                            {% elif percentage >= 60 %}
+                            <span class="badge bg-secondary">D</span>
+                            {% else %}
+                            <span class="badge bg-danger">F</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ grade.graded_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <a href="{{ url_for('assignment_detail', assignment_id=grade.assignment_id) }}" class="btn wauu-btn btn-sm">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Grades by Course -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-book me-2"></i>Grades by Course</h5>
+            </div>
+            <div class="card-body">
+                {% set courses_grades = {} %}
+                {% for grade in grades %}
+                    {% if grade.assignment.course.code not in courses_grades %}
+                        {% set _ = courses_grades.update({grade.assignment.course.code: []}) %}
+                    {% endif %}
+                    {% set _ = courses_grades[grade.assignment.course.code].append(grade) %}
+                {% endfor %}
+                
+                <div class="row">
+                    {% for course_code, course_grades in courses_grades.items() %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <strong>{{ course_code }}</strong> - {{ course_grades[0].assignment.course.title }}
+                            </div>
+                            <div class="card-body">
+                                {% set course_total_earned = 0 %}
+                                {% set course_total_possible = 0 %}
+                                {% for grade in course_grades %}
+                                    {% set course_total_earned = course_total_earned + grade.points_earned %}
+                                    {% set course_total_possible = course_total_possible + grade.assignment.max_points %}
+                                {% endfor %}
+                                
+                                <div class="row text-center mb-3">
+                                    <div class="col-4">
+                                        <h5>{{ course_grades|length }}</h5>
+                                        <small class="text-muted">Assignments</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <h5>{{ course_total_earned|int }} / {{ course_total_possible|int }}</h5>
+                                        <small class="text-muted">Points</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <h5>{{ "%.1f"|format((course_total_earned / course_total_possible) * 100) }}%</h5>
+                                        <small class="text-muted">Course Average</small>
+                                    </div>
+                                </div>
+                                
+                                {% for grade in course_grades %}
+                                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                                    <div>
+                                        <strong>{{ grade.assignment.title }}</strong>
+                                        <div class="small text-muted">{{ grade.graded_at.strftime('%Y-%m-%d') }}</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>{{ grade.points_earned }} / {{ grade.assignment.max_points }}</strong>
+                                        <div class="small">{{ "%.1f"|format(grade.get_percentage()) }}%</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No grades available</h4>
+    <p class="text-muted">Your assignments haven't been graded yet.</p>
+    <a href="{{ url_for('assignments') }}" class="btn wauu-btn">
+        <i class="fas fa-tasks me-1"></i>View Assignments
+    </a>
+</div>
+{% endif %}
+{% endblock %}

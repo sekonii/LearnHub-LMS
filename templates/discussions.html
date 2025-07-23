@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Discussions - WAUU LMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-comments me-2"></i>Discussions</h2>
+</div>
+
+{% if discussions %}
+<div class="row">
+    {% for discussion in discussions %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="badge wauu-bg">{{ discussion.course.code }}</span>
+                    <small class="text-muted">{{ discussion.created_at.strftime('%Y-%m-%d') }}</small>
+                </div>
+                
+                <h5 class="card-title">
+                    <a href="{{ url_for('discussion_detail', discussion_id=discussion.id) }}" class="text-decoration-none">
+                        {{ discussion.title }}
+                    </a>
+                </h5>
+                
+                <p class="card-text text-muted">{{ discussion.description[:120] }}...</p>
+                
+                <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-book me-1"></i>{{ discussion.course.title }}
+                        </small>
+                        <small class="text-muted">
+                            <i class="fas fa-comments me-1"></i>{{ discussion.posts.count() }} posts
+                        </small>
+                    </div>
+                    
+                    <!-- Recent Posts Preview -->
+                    {% set recent_posts = [] %}
+                    {% if recent_posts %}
+                    <div class="border-top pt-3">
+                        <h6 class="small text-muted mb-2">Recent Activity:</h6>
+                        {% for post in recent_posts %}
+                        <div class="small mb-2">
+                            <strong>{{ post.author.get_full_name() }}:</strong>
+                            {{ post.content[:60] }}...
+                            <div class="text-muted">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid mt-3">
+                        <a href="{{ url_for('discussion_detail', discussion_id=discussion.id) }}" class="btn wauu-btn">
+                            <i class="fas fa-eye me-1"></i>View Discussion
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if current_user.is_lecturer() %}
+<!-- Statistics for Lecturers -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar me-2"></i>Discussion Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h4 class="text-primary">{{ discussions|length }}</h4>
+                        <p class="text-muted">Total Discussions</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-success">
+                            {% set total_posts = 0 %}
+                            {% for discussion in discussions %}
+                                {% set total_posts = total_posts + discussion.posts.count() %}
+                            {% endfor %}
+                            {{ total_posts }}
+                        </h4>
+                        <p class="text-muted">Total Posts</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-info">
+                            {% set active_discussions = 0 %}
+                            {% for discussion in discussions %}
+                                {% if discussion.posts.count() > 0 %}
+                                    {% set active_discussions = active_discussions + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ active_discussions }}
+                        </h4>
+                        <p class="text-muted">Active Discussions</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-warning">{{ discussions|length - active_discussions }}</h4>
+                        <p class="text-muted">No Activity</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No discussions available</h4>
+    <p class="text-muted">
+        {% if current_user.is_student() %}
+        No discussions have been created for your enrolled courses yet.
+        {% elif current_user.is_lecturer() %}
+        No discussions have been created for your courses yet.
+        {% else %}
+        No discussions have been created in the system yet.
+        {% endif %}
+    </p>
+</div>
+{% endif %}
+{% endblock %}
